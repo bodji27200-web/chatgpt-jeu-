@@ -1,0 +1,1896 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#17110d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Royaumes du Hasard</title>
+  <meta name="description" content="Jeu de collection et de combat de cartes médiéval-fantastique.">
+  <meta name="format-detection" content="telephone=no">
+  <style>
+:root {
+  --bg: #100c0a;
+  --panel: #1b1511;
+  --panel-2: #251c16;
+  --panel-3: #31241a;
+  --ink: #f2e7d2;
+  --muted: #b9a991;
+  --gold: #e9bd63;
+  --gold-2: #8e6129;
+  --danger: #e86c64;
+  --success: #74c98d;
+  --line: rgba(233, 189, 99, 0.22);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  font-family: Georgia, 'Times New Roman', serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 20% -10%, rgba(146, 93, 33, .28), transparent 34%),
+    radial-gradient(circle at 90% 15%, rgba(83, 39, 66, .2), transparent 28%),
+    linear-gradient(180deg, #17110d 0%, #0e0a08 100%);
+  overscroll-behavior: none;
+}
+button, input, select, textarea { font: inherit; }
+button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.app-shell { min-height: 100dvh; padding-top: var(--safe-top); padding-bottom: calc(78px + var(--safe-bottom)); }
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 14px;
+  background: rgba(16, 12, 10, .94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.brand { min-width: 0; }
+.brand h1 { margin: 0; font-size: clamp(18px, 5vw, 28px); letter-spacing: .04em; color: var(--gold); white-space: nowrap; }
+.brand small { color: var(--muted); font-size: 11px; }
+.resources { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.resource-pill { padding: 7px 9px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); font-size: 13px; white-space: nowrap; }
+.resource-pill strong { color: var(--gold); }
+.icon-button { width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); font-size: 18px; }
+
+main { width: min(1120px, 100%); margin: 0 auto; padding: 14px; }
+.view-title { margin: 6px 0 4px; color: var(--gold); font-size: clamp(24px, 7vw, 38px); }
+.view-subtitle { margin: 0 0 18px; color: var(--muted); line-height: 1.5; }
+.panel { background: linear-gradient(180deg, rgba(42, 31, 23, .96), rgba(26, 20, 16, .96)); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 38px rgba(0,0,0,.26); }
+.panel-pad { padding: 16px; }
+.section-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 12px; color: var(--gold); font-size: 20px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+.bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  padding: 8px 8px calc(8px + var(--safe-bottom));
+  background: rgba(16, 12, 10, .97);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+}
+.nav-btn { min-height: 58px; border: 0; background: transparent; color: var(--muted); border-radius: 14px; display: grid; place-items: center; gap: 2px; font-size: 11px; }
+.nav-btn span:first-child { font-size: 22px; line-height: 1; }
+.nav-btn.active { color: var(--gold); background: rgba(233,189,99,.1); }
+
+.primary-btn, .secondary-btn, .danger-btn, .action-btn {
+  min-height: 48px; border-radius: 13px; padding: 11px 15px; border: 1px solid transparent; font-weight: 700; cursor: pointer;
+}
+.primary-btn { color: #20160d; background: linear-gradient(180deg, #f1cf85, #c58a36); border-color: #f6d99c; }
+.secondary-btn { color: var(--ink); background: var(--panel-3); border-color: var(--line); }
+.danger-btn { color: #fff; background: #7d2f30; border-color: #ad5052; }
+button:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.3); }
+.button-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.button-row > button { flex: 1 1 140px; }
+
+.summon-banner {
+  position: relative; overflow: hidden; min-height: 270px; padding: 22px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  background:
+    radial-gradient(circle at 70% 25%, rgba(255, 87, 145, .34), transparent 18%),
+    radial-gradient(circle at 72% 26%, rgba(248, 210, 104, .35), transparent 33%),
+    linear-gradient(135deg, #251510, #3f2434 58%, #171a2b);
+}
+.summon-banner::before { content: '✺'; position: absolute; right: 7%; top: 8%; font-size: 140px; color: rgba(255,255,255,.08); text-shadow: 0 0 40px rgba(255,190,100,.45); }
+.summon-banner::after { content: ''; position: absolute; inset: 10px; border: 1px solid rgba(239,203,135,.28); border-radius: 14px; pointer-events: none; }
+.summon-banner h2 { position: relative; margin: 0; color: #ffe2a4; font-size: clamp(30px, 9vw, 52px); }
+.summon-banner p { position: relative; max-width: 600px; color: #e8d6c5; line-height: 1.5; }
+.summon-actions { position: relative; display: flex; gap: 10px; flex-wrap: wrap; }
+.summon-actions button { flex: 1 1 180px; }
+.rate-grid { margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rate-item { padding: 10px; border-radius: 12px; background: rgba(0,0,0,.2); border: 1px solid var(--line); text-align: center; }
+.rate-item strong { display: block; font-size: 17px; }
+.pity-box { margin-top: 14px; display: grid; gap: 8px; }
+.progress { height: 9px; border-radius: 999px; background: #0f0b09; overflow: hidden; border: 1px solid var(--line); }
+.progress > span { display: block; height: 100%; background: linear-gradient(90deg, #8c5f2a, #e8bd63); }
+
+.toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 12px; }
+.toolbar input, .toolbar select, .save-textarea { min-height: 46px; border: 1px solid var(--line); background: #130e0b; color: var(--ink); border-radius: 12px; padding: 10px 12px; }
+.filter-row { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-chip { white-space: nowrap; min-height: 40px; border-radius: 999px; padding: 7px 12px; background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
+.filter-chip.active { color: #21160d; background: var(--gold); }
+
+.card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.game-card {
+  --rarity: #9aa3ad;
+  position: relative; overflow: hidden; min-width: 0;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--rarity) 18%, #291e17), #17110e 58%);
+  border: 1px solid color-mix(in srgb, var(--rarity) 55%, transparent);
+  border-radius: 15px; padding: 10px; box-shadow: inset 0 0 25px rgba(0,0,0,.25);
+}
+.game-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.06) 48%, transparent 66%); transform: translateX(-110%); transition: transform .5s; }
+.game-card:active::before { transform: translateX(110%); }
+.game-card.selected { outline: 2px solid var(--gold); outline-offset: 2px; }
+.card-button { width: 100%; text-align: left; color: inherit; cursor: pointer; }
+.card-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.card-rarity { color: var(--rarity); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.card-level { font-size: 11px; color: var(--muted); }
+.card-art { height: 94px; margin: 8px 0; border-radius: 11px; display: grid; place-items: center; font-size: 52px; color: color-mix(in srgb, var(--rarity) 70%, white); background: radial-gradient(circle, color-mix(in srgb, var(--rarity) 22%, transparent), rgba(0,0,0,.22) 68%); border: 1px solid color-mix(in srgb, var(--rarity) 30%, transparent); text-shadow: 0 0 25px color-mix(in srgb, var(--rarity) 45%, transparent); }
+.card-name { margin: 0; font-size: 15px; line-height: 1.2; min-height: 36px; }
+.card-role { color: var(--muted); font-size: 11px; margin-top: 3px; }
+.card-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 8px; }
+.stat-chip { background: rgba(0,0,0,.22); border-radius: 7px; padding: 5px 6px; font-size: 11px; }
+.team-mark { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--gold); color: #21160d; font-weight: 900; }
+
+.team-slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.team-slot { min-height: 126px; border-radius: 14px; border: 1px dashed var(--line); background: rgba(0,0,0,.15); display: grid; place-items: center; text-align: center; color: var(--muted); padding: 8px; }
+.team-slot.filled { border-style: solid; color: var(--ink); cursor: pointer; }
+.team-slot .slot-icon { font-size: 32px; }
+.team-slot .slot-name { font-size: 11px; line-height: 1.2; }
+.team-summary { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 12px; }
+
+.stage-list { display: grid; gap: 10px; }
+.stage-card { padding: 14px; display: grid; gap: 10px; }
+.stage-card.locked { opacity: .58; filter: grayscale(.45); }
+.stage-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.stage-head h3 { margin: 0 0 3px; color: var(--gold); }
+.difficulty { color: #efaa59; letter-spacing: 1px; white-space: nowrap; }
+.enemy-preview { display: flex; gap: 6px; overflow-x: auto; }
+.mini-portrait { --rarity: #9aa3ad; min-width: 56px; height: 66px; border-radius: 10px; border: 1px solid var(--rarity); background: color-mix(in srgb, var(--rarity) 14%, #17110e); display: grid; place-items: center; font-size: 27px; position: relative; }
+.mini-portrait small { position: absolute; bottom: 2px; font-size: 9px; background: rgba(0,0,0,.62); padding: 1px 4px; border-radius: 6px; }
+.reward-line { color: var(--muted); font-size: 13px; }
+.cleared-badge { color: var(--success); font-size: 12px; }
+
+.battle-wrap { display: grid; gap: 12px; }
+.battle-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.arena {
+  position: relative; overflow: hidden; min-height: 430px; padding: 16px;
+  display: grid; grid-template-columns: 1fr 58px 1fr; grid-template-rows: 1fr auto; gap: 12px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(234, 188, 99, .14), transparent 25%),
+    linear-gradient(180deg, rgba(56,44,34,.9), rgba(25,20,16,.95)),
+    repeating-linear-gradient(90deg, transparent 0 29px, rgba(255,255,255,.018) 30px);
+}
+.arena::after { content: ''; position: absolute; left: 50%; top: 16%; bottom: 24%; width: 1px; background: linear-gradient(transparent, rgba(233,189,99,.35), transparent); }
+.vs { align-self: center; justify-self: center; z-index: 2; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: #17100c; border: 1px solid var(--gold-2); color: var(--gold); font-weight: 900; }
+.fighter { --rarity: #9aa3ad; position: relative; align-self: center; min-width: 0; padding: 12px; border-radius: 16px; border: 1px solid var(--rarity); background: linear-gradient(160deg, color-mix(in srgb, var(--rarity) 16%, #251b15), #130f0c); }
+.fighter.enemy { text-align: right; }
+.fighter-art { height: 126px; display: grid; place-items: center; font-size: 72px; color: color-mix(in srgb, var(--rarity) 72%, white); text-shadow: 0 0 30px color-mix(in srgb, var(--rarity) 50%, transparent); }
+.fighter h3 { margin: 0 0 3px; font-size: clamp(14px, 4.5vw, 22px); }
+.fighter-meta { font-size: 11px; color: var(--muted); }
+.hp-line { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; margin-top: 8px; }
+.hp-bar, .shield-bar { height: 10px; background: #090706; border-radius: 999px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); }
+.hp-bar span { display: block; height: 100%; background: linear-gradient(90deg, #8d282b, #e75b56); }
+.shield-bar { height: 5px; margin-top: 4px; }
+.shield-bar span { display: block; height: 100%; background: #5aa8e5; }
+.status-row { display: flex; gap: 4px; flex-wrap: wrap; min-height: 22px; margin-top: 6px; }
+.status { border-radius: 999px; padding: 3px 6px; font-size: 9px; background: rgba(0,0,0,.32); border: 1px solid var(--line); }
+.bench { grid-column: 1; display: flex; gap: 6px; align-self: end; overflow-x: auto; }
+.bench.enemy-bench { grid-column: 3; justify-content: flex-end; }
+.bench-card { --rarity: #9aa3ad; min-width: 60px; height: 72px; border-radius: 10px; border: 1px solid var(--rarity); background: color-mix(in srgb, var(--rarity) 12%, #17110e); color: var(--ink); display: grid; place-items: center; position: relative; font-size: 28px; }
+.bench-card.dead { filter: grayscale(1); opacity: .35; }
+.bench-card .bench-hp { position: absolute; left: 3px; right: 3px; bottom: 3px; height: 4px; border-radius: 5px; overflow: hidden; background: #080605; }
+.bench-card .bench-hp span { display: block; height: 100%; background: #c94747; }
+
+.actions-panel { padding: 12px; }
+.action-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.action-btn { min-height: 58px; color: var(--ink); background: var(--panel-3); border-color: var(--line); text-align: left; }
+.action-btn strong { display: block; color: var(--gold); }
+.action-btn small { display: block; color: var(--muted); font-weight: 400; margin-top: 2px; }
+.action-btn.skill { grid-column: 1 / -1; background: linear-gradient(135deg, #3f253b, #27203c); }
+.combat-log { max-height: 170px; overflow-y: auto; padding: 12px; font-size: 12px; line-height: 1.55; }
+.combat-log p { margin: 0 0 5px; color: var(--muted); }
+.combat-log p:last-child { color: var(--ink); }
+
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; padding: max(18px, var(--safe-top)) 14px calc(18px + var(--safe-bottom)); background: rgba(0,0,0,.74); display: grid; place-items: center; overflow-y: auto; }
+.modal { width: min(680px, 100%); max-height: 92dvh; overflow-y: auto; background: #1d1612; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 24px 80px rgba(0,0,0,.65); }
+.modal-head { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 14px 16px; background: #1d1612; border-bottom: 1px solid var(--line); }
+.modal-head h2 { margin: 0; color: var(--gold); font-size: 20px; }
+.modal-body { padding: 16px; }
+.close-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--panel-3); color: var(--ink); border: 1px solid var(--line); }
+.detail-hero { --rarity: #9aa3ad; padding: 18px; border-radius: 16px; border: 1px solid var(--rarity); background: linear-gradient(150deg, color-mix(in srgb, var(--rarity) 18%, #2a1d16), #15100d); text-align: center; }
+.detail-icon { font-size: 86px; color: color-mix(in srgb, var(--rarity) 75%, white); text-shadow: 0 0 35px color-mix(in srgb, var(--rarity) 45%, transparent); }
+.detail-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 14px 0; }
+.detail-stat { padding: 10px; border-radius: 10px; background: rgba(0,0,0,.22); }
+.detail-stat strong { display: block; font-size: 20px; color: var(--gold); }
+.summon-results { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+.result-card { --rarity: #9aa3ad; padding: 10px; border: 1px solid var(--rarity); border-radius: 13px; background: color-mix(in srgb, var(--rarity) 13%, #17110e); text-align: center; }
+.result-card .result-icon { font-size: 46px; }
+.new-badge { display: inline-block; padding: 3px 7px; border-radius: 999px; background: var(--success); color: #102016; font-size: 10px; font-weight: 900; }
+.save-textarea { width: 100%; min-height: 135px; resize: vertical; font-family: ui-monospace, monospace; font-size: 11px; }
+
+.toast-root, #toast-root { position: fixed; left: 50%; bottom: calc(88px + var(--safe-bottom)); transform: translateX(-50%); z-index: 150; width: min(92vw, 420px); pointer-events: none; }
+.toast { margin-top: 8px; padding: 12px 14px; border-radius: 12px; background: #2a2018; border: 1px solid var(--line); box-shadow: 0 12px 35px rgba(0,0,0,.45); animation: toast-in .22s ease-out; }
+.toast.error { border-color: rgba(232,108,100,.7); }
+.toast.success { border-color: rgba(116,201,141,.7); }
+.empty-state { text-align: center; padding: 34px 18px; color: var(--muted); }
+
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-width: 700px) {
+  .card-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .summon-results { grid-template-columns: repeat(5, 1fr); }
+  .rate-grid { grid-template-columns: repeat(6, 1fr); }
+  .app-shell { padding-bottom: 24px; }
+  .bottom-nav { position: sticky; top: 73px; bottom: auto; width: min(760px, calc(100% - 28px)); margin: 12px auto 0; border: 1px solid var(--line); border-radius: 16px; padding: 6px; }
+  .nav-btn { min-height: 50px; }
+}
+@media (max-width: 390px) {
+  .brand small { display: none; }
+  .resources { gap: 4px; }
+  .resource-pill { padding: 6px 7px; font-size: 11px; }
+  main { padding: 10px; }
+  .arena { min-height: 390px; padding: 10px; grid-template-columns: 1fr 42px 1fr; gap: 7px; }
+  .fighter { padding: 8px; }
+  .fighter-art { height: 100px; font-size: 58px; }
+  .vs { width: 38px; height: 38px; font-size: 12px; }
+  .team-slot { min-height: 110px; padding: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+
+
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 15%, rgba(142, 97, 41, .28), transparent 36%),
+    #100c0a;
+  color: #f2e7d2;
+  text-align: center;
+}
+.boot-card {
+  width: min(420px, 100%);
+  padding: 24px;
+  border: 1px solid rgba(233, 189, 99, .32);
+  border-radius: 20px;
+  background: rgba(37, 28, 22, .96);
+  box-shadow: 0 18px 50px rgba(0,0,0,.42);
+}
+.boot-title {
+  margin: 0 0 8px;
+  color: #e9bd63;
+  font-size: clamp(25px, 8vw, 38px);
+}
+.boot-message {
+  margin: 0;
+  color: #b9a991;
+  line-height: 1.5;
+}
+.boot-error {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(232,108,100,.45);
+  border-radius: 12px;
+  color: #ffd6d2;
+  background: rgba(105,34,31,.28);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+</style>
+</head>
+<body>
+  <div id="boot-screen" class="boot-screen">
+    <div class="boot-card">
+      <h1 class="boot-title">Royaumes du Hasard</h1>
+      <p id="boot-message" class="boot-message">Ouverture du portail…</p>
+    </div>
+  </div>
+  <div id="app" aria-live="polite"></div>
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="assertive"></div>
+  <script>
+    (function () {
+      function showBootError(message) {
+        var boot = document.getElementById('boot-screen');
+        var text = document.getElementById('boot-message');
+        if (!boot || !text) return;
+        text.textContent = 'Le jeu n’a pas pu démarrer.';
+        var old = document.getElementById('boot-error');
+        if (old) old.remove();
+        var details = document.createElement('div');
+        details.id = 'boot-error';
+        details.className = 'boot-error';
+        details.textContent = String(message || 'Erreur inconnue');
+        text.parentNode.appendChild(details);
+      }
+      window.addEventListener('error', function (event) {
+        showBootError(event.message || 'Erreur JavaScript');
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        showBootError(event.reason && event.reason.message ? event.reason.message : event.reason);
+      });
+      window.__showBootError = showBootError;
+    })();
+  </script>
+  <script>
+(function (global) {
+  'use strict';
+
+  const RARITIES = {
+    common: { id: 'common', label: 'Commune', rate: 54, color: '#9aa3ad', power: 1, order: 1 },
+    uncommon: { id: 'uncommon', label: 'Inhabituelle', rate: 28, color: '#4dbf73', power: 1.14, order: 2 },
+    rare: { id: 'rare', label: 'Rare', rate: 12, color: '#4f8cff', power: 1.32, order: 3 },
+    epic: { id: 'epic', label: 'Épique', rate: 4.5, color: '#aa63ff', power: 1.58, order: 4 },
+    legendary: { id: 'legendary', label: 'Légendaire', rate: 1.3, color: '#ffb33f', power: 1.92, order: 5 },
+    mythic: { id: 'mythic', label: 'Mythique', rate: 0.2, color: '#ff4d7d', power: 2.32, order: 6 }
+  };
+
+  const CARDS = [
+    {
+      id: 'milicien_des_marches', name: 'Milicien des Marches', rarity: 'common', faction: 'Royaume', role: 'Guerrier', icon: '⚔',
+      lore: 'Un soldat sans gloire, mais rarement sans courage.', preferred: 'physical',
+      stats: { hp: 142, physical: 30, magical: 10, speed: 42 },
+      skill: { name: 'Coup de bouclier', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 1.35, status: { kind: 'stun', chance: 0.18, turns: 1 } }
+    },
+    {
+      id: 'archere_des_bois', name: 'Archère des Bois', rarity: 'common', faction: 'Sylve', role: 'Tireuse', icon: '➶',
+      lore: 'Elle ne rate que les cibles qui ont déjà fui.', preferred: 'physical',
+      stats: { hp: 118, physical: 33, magical: 12, speed: 55 },
+      skill: { name: 'Flèche barbelée', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 1.2, status: { kind: 'bleed', chance: 0.8, turns: 3, power: 0.06 } }
+    },
+    {
+      id: 'novice_du_cloitre', name: 'Novice du Cloître', rarity: 'common', faction: 'Lumière', role: 'Soutien', icon: '✦',
+      lore: 'Sa foi tremble parfois. Sa magie, jamais.', preferred: 'magical',
+      stats: { hp: 126, physical: 11, magical: 30, speed: 39 },
+      skill: { name: 'Prière réparatrice', cooldown: 3, type: 'heal', scaling: 'magical', multiplier: 1.5, target: 'self' }
+    },
+    {
+      id: 'pillard_des_tourbes', name: 'Pillard des Tourbes', rarity: 'common', faction: 'Clans', role: 'Brute', icon: '✹',
+      lore: 'Il confond stratégie et course en hurlant. Cela fonctionne souvent.', preferred: 'physical',
+      stats: { hp: 154, physical: 35, magical: 7, speed: 29 },
+      skill: { name: 'Charge boueuse', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 1.5, recoil: 0.08 }
+    },
+    {
+      id: 'apprentie_runique', name: 'Apprentie Runique', rarity: 'common', faction: 'Arcanes', role: 'Mage', icon: '◇',
+      lore: 'Chaque rune correcte efface deux erreurs explosives.', preferred: 'magical',
+      stats: { hp: 112, physical: 8, magical: 35, speed: 47 },
+      skill: { name: 'Rune instable', cooldown: 3, type: 'attack', scaling: 'magical', multiplier: 1.45, variance: 0.25 }
+    },
+    {
+      id: 'ecuyer_du_griffon', name: 'Écuyer du Griffon', rarity: 'common', faction: 'Royaume', role: 'Gardien', icon: '♜',
+      lore: 'Il porte une armure trop grande et des ambitions encore plus lourdes.', preferred: 'physical',
+      stats: { hp: 166, physical: 24, magical: 9, speed: 31 },
+      skill: { name: 'Garde du griffon', cooldown: 3, type: 'shield', scaling: 'hp', multiplier: 0.22, target: 'self' }
+    },
+
+    {
+      id: 'duelliste_ecarlate', name: 'Duelliste Écarlate', rarity: 'uncommon', faction: 'Royaume', role: 'Duelliste', icon: '⚔',
+      lore: 'Il salue toujours avant de frapper. Jamais après.', preferred: 'physical',
+      stats: { hp: 150, physical: 40, magical: 12, speed: 62 },
+      skill: { name: 'Riposte écarlate', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 1.55, buff: { kind: 'speed', amount: 10, turns: 2 } }
+    },
+    {
+      id: 'sorciere_des_cendres', name: 'Sorcière des Cendres', rarity: 'uncommon', faction: 'Cendre', role: 'Mage', icon: '♨',
+      lore: 'Ses flammes aiment les bibliothèques et détestent les excuses.', preferred: 'magical',
+      stats: { hp: 132, physical: 8, magical: 45, speed: 48 },
+      skill: { name: 'Braise vorace', cooldown: 3, type: 'attack', scaling: 'magical', multiplier: 1.25, status: { kind: 'burn', chance: 0.9, turns: 3, power: 0.07 } }
+    },
+    {
+      id: 'sentinelle_de_chene', name: 'Sentinelle de Chêne', rarity: 'uncommon', faction: 'Sylve', role: 'Gardien', icon: '♣',
+      lore: 'Les arbres oublient lentement. Elle aussi.', preferred: 'physical',
+      stats: { hp: 196, physical: 29, magical: 18, speed: 30 },
+      skill: { name: 'Écorce vivante', cooldown: 3, type: 'shield', scaling: 'hp', multiplier: 0.3, target: 'self', healRatio: 0.08 }
+    },
+    {
+      id: 'assassin_du_beffroi', name: 'Assassin du Beffroi', rarity: 'uncommon', faction: 'Ombre', role: 'Assassin', icon: '✥',
+      lore: 'On l’entend seulement quand il veut être payé.', preferred: 'physical',
+      stats: { hp: 124, physical: 44, magical: 15, speed: 72 },
+      skill: { name: 'Lame silencieuse', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 1.7, execute: 0.25 }
+    },
+    {
+      id: 'druide_des_sources', name: 'Druide des Sources', rarity: 'uncommon', faction: 'Sylve', role: 'Soutien', icon: '❧',
+      lore: 'Il parle aux rivières. Elles répondent surtout quand personne ne regarde.', preferred: 'magical',
+      stats: { hp: 148, physical: 14, magical: 41, speed: 45 },
+      skill: { name: 'Sève bienfaisante', cooldown: 3, type: 'heal', scaling: 'magical', multiplier: 1.65, target: 'lowestAlly' }
+    },
+    {
+      id: 'lancier_des_falaises', name: 'Lancier des Falaises', rarity: 'uncommon', faction: 'Clans', role: 'Guerrier', icon: '↟',
+      lore: 'Le vent l’a rendu patient. Les chèvres, beaucoup moins.', preferred: 'physical',
+      stats: { hp: 168, physical: 39, magical: 9, speed: 50 },
+      skill: { name: 'Percée des hauteurs', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 1.48, pierceShield: true }
+    },
+
+    {
+      id: 'chevalier_du_soleil', name: 'Chevalier du Soleil', rarity: 'rare', faction: 'Lumière', role: 'Paladin', icon: '☼',
+      lore: 'Son serment éclaire davantage que son jugement.', preferred: 'physical',
+      stats: { hp: 214, physical: 46, magical: 28, speed: 43 },
+      skill: { name: 'Sentence solaire', cooldown: 3, type: 'attack', scaling: 'hybrid', multiplier: 1.15, healRatio: 0.1 }
+    },
+    {
+      id: 'necromancienne_grise', name: 'Nécromancienne Grise', rarity: 'rare', faction: 'Ombre', role: 'Mage', icon: '☠',
+      lore: 'Elle ne ressuscite pas les morts. Elle négocie leur retour.', preferred: 'magical',
+      stats: { hp: 158, physical: 12, magical: 56, speed: 52 },
+      skill: { name: 'Dette funéraire', cooldown: 3, type: 'attack', scaling: 'magical', multiplier: 1.35, drain: 0.45 }
+    },
+    {
+      id: 'ranger_du_loup_blanc', name: 'Ranger du Loup Blanc', rarity: 'rare', faction: 'Clans', role: 'Tireur', icon: '◁',
+      lore: 'Le loup chasse avec lui. Parfois malgré lui.', preferred: 'physical',
+      stats: { hp: 162, physical: 52, magical: 18, speed: 67 },
+      skill: { name: 'Chasse en meute', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 1.5, status: { kind: 'bleed', chance: 1, turns: 2, power: 0.08 } }
+    },
+    {
+      id: 'oracle_de_verre', name: 'Oracle de Verre', rarity: 'rare', faction: 'Arcanes', role: 'Mage', icon: '◈',
+      lore: 'Elle voit tous les futurs, sauf ceux où son thé reste chaud.', preferred: 'magical',
+      stats: { hp: 144, physical: 9, magical: 59, speed: 61 },
+      skill: { name: 'Éclat prophétique', cooldown: 3, type: 'attack', scaling: 'magical', multiplier: 1.45, buff: { kind: 'speed', amount: 16, turns: 2 } }
+    },
+    {
+      id: 'berserker_des_neiges', name: 'Berserker des Neiges', rarity: 'rare', faction: 'Clans', role: 'Brute', icon: '❄',
+      lore: 'Le froid calme les hommes raisonnables. Lui n’a jamais essayé.', preferred: 'physical',
+      stats: { hp: 225, physical: 58, magical: 6, speed: 38 },
+      skill: { name: 'Fureur boréale', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 1.75, recoil: 0.1 }
+    },
+    {
+      id: 'pretresse_des_lys', name: 'Prêtresse des Lys', rarity: 'rare', faction: 'Lumière', role: 'Soutien', icon: '⚜',
+      lore: 'Chaque pétale est une promesse. Chaque épine, une condition.', preferred: 'magical',
+      stats: { hp: 171, physical: 12, magical: 52, speed: 48 },
+      skill: { name: 'Grâce des lys', cooldown: 3, type: 'heal', scaling: 'magical', multiplier: 1.85, target: 'team', teamRatio: 0.38 }
+    },
+
+    {
+      id: 'champion_du_dragon', name: 'Champion du Dragon', rarity: 'epic', faction: 'Royaume', role: 'Guerrier', icon: '♞',
+      lore: 'Il n’a jamais vu de dragon. Il préfère que cela reste entre nous.', preferred: 'physical',
+      stats: { hp: 256, physical: 68, magical: 22, speed: 54 },
+      skill: { name: 'Brise-rempart', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 1.9, pierceShield: true }
+    },
+    {
+      id: 'reine_des_ronces', name: 'Reine des Ronces', rarity: 'epic', faction: 'Sylve', role: 'Mage', icon: '♛',
+      lore: 'Son royaume fleurit sur les ruines de ceux qui l’ont sous-estimée.', preferred: 'magical',
+      stats: { hp: 205, physical: 24, magical: 72, speed: 59 },
+      skill: { name: 'Couronne d’épines', cooldown: 3, type: 'attack', scaling: 'magical', multiplier: 1.42, status: { kind: 'poison', chance: 1, turns: 4, power: 0.07 }, shieldRatio: 0.12 }
+    },
+    {
+      id: 'maitre_des_lames_noires', name: 'Maître des Lames Noires', rarity: 'epic', faction: 'Ombre', role: 'Assassin', icon: '✦',
+      lore: 'Deux lames, trois mensonges et aucun témoin.', preferred: 'physical',
+      stats: { hp: 180, physical: 76, magical: 20, speed: 84 },
+      skill: { name: 'Danse des veuves', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 2.0, execute: 0.3 }
+    },
+    {
+      id: 'archimage_des_marées', name: 'Archimage des Marées', rarity: 'epic', faction: 'Arcanes', role: 'Mage', icon: '≈',
+      lore: 'Il commande aux océans. Les flaques restent indépendantes.', preferred: 'magical',
+      stats: { hp: 188, physical: 13, magical: 82, speed: 57 },
+      skill: { name: 'Vague abyssale', cooldown: 3, type: 'attack', scaling: 'magical', multiplier: 1.72, status: { kind: 'slow', chance: 1, turns: 2, amount: 18 } }
+    },
+    {
+      id: 'gardienne_du_temps', name: 'Gardienne du Temps', rarity: 'epic', faction: 'Arcanes', role: 'Soutien', icon: '⌛',
+      lore: 'Elle offre une seconde chance, rarement une troisième.', preferred: 'magical',
+      stats: { hp: 218, physical: 16, magical: 66, speed: 74 },
+      skill: { name: 'Heure volée', cooldown: 4, type: 'heal', scaling: 'magical', multiplier: 1.5, target: 'lowestAlly', buff: { kind: 'speed', amount: 24, turns: 2 } }
+    },
+    {
+      id: 'seigneur_des_cryptes', name: 'Seigneur des Cryptes', rarity: 'epic', faction: 'Ombre', role: 'Gardien', icon: '♚',
+      lore: 'Ses sujets ne se plaignent jamais. Techniquement.', preferred: 'magical',
+      stats: { hp: 292, physical: 38, magical: 55, speed: 32 },
+      skill: { name: 'Armure ossuaire', cooldown: 3, type: 'shield', scaling: 'hp', multiplier: 0.38, target: 'self', thorns: 0.25 }
+    },
+
+    {
+      id: 'roi_sans_couronne', name: 'Le Roi sans Couronne', rarity: 'legendary', faction: 'Royaume', role: 'Paladin', icon: '♔',
+      lore: 'Il a perdu son trône, pas l’habitude de donner des ordres.', preferred: 'physical',
+      stats: { hp: 328, physical: 84, magical: 58, speed: 66 },
+      skill: { name: 'Décret du dernier roi', cooldown: 3, type: 'attack', scaling: 'hybrid', multiplier: 1.55, healRatio: 0.16, shieldRatio: 0.14 }
+    },
+    {
+      id: 'dragonne_d_ambre', name: 'Dragonne d’Ambre', rarity: 'legendary', faction: 'Cendre', role: 'Mage', icon: '◆',
+      lore: 'Son souffle fond l’acier et les plans mal préparés.', preferred: 'magical',
+      stats: { hp: 278, physical: 52, magical: 99, speed: 71 },
+      skill: { name: 'Fournaise souveraine', cooldown: 3, type: 'attack', scaling: 'magical', multiplier: 1.85, status: { kind: 'burn', chance: 1, turns: 4, power: 0.09 } }
+    },
+    {
+      id: 'faucheuse_de_lune', name: 'Faucheuse de Lune', rarity: 'legendary', faction: 'Ombre', role: 'Assassin', icon: '☾',
+      lore: 'La lune disparaît parfois pour ne pas la regarder travailler.', preferred: 'physical',
+      stats: { hp: 238, physical: 104, magical: 44, speed: 102 },
+      skill: { name: 'Éclipse mortelle', cooldown: 3, type: 'attack', scaling: 'physical', multiplier: 2.15, execute: 0.38, drain: 0.2 }
+    },
+    {
+      id: 'saint_des_cendres', name: 'Saint des Cendres', rarity: 'legendary', faction: 'Lumière', role: 'Soutien', icon: '✧',
+      lore: 'Il pardonne tout, sauf le gaspillage de mana.', preferred: 'magical',
+      stats: { hp: 294, physical: 30, magical: 92, speed: 64 },
+      skill: { name: 'Miracle incandescent', cooldown: 4, type: 'heal', scaling: 'magical', multiplier: 2.25, target: 'team', teamRatio: 0.5, cleanse: true }
+    },
+
+    {
+      id: 'aethelion_premier_ne', name: 'Aethelion, Premier-Né', rarity: 'mythic', faction: 'Primordial', role: 'Guerrier', icon: '✺',
+      lore: 'Avant les royaumes, il y eut sa lame. Avant sa lame, rien de certain.', preferred: 'physical',
+      stats: { hp: 405, physical: 132, magical: 76, speed: 96 },
+      skill: { name: 'Aube primordiale', cooldown: 3, type: 'attack', scaling: 'hybrid', multiplier: 2.0, healRatio: 0.2, shieldRatio: 0.18, status: { kind: 'stun', chance: 0.35, turns: 1 } }
+    },
+    {
+      id: 'morrigan_reine_du_voile', name: 'Morrigan, Reine du Voile', rarity: 'mythic', faction: 'Primordial', role: 'Mage', icon: '◉',
+      lore: 'Elle connaît le vrai nom de chaque ombre. Certaines lui répondent.', preferred: 'magical',
+      stats: { hp: 352, physical: 56, magical: 145, speed: 108 },
+      skill: { name: 'Nuit sans fin', cooldown: 3, type: 'attack', scaling: 'magical', multiplier: 2.1, drain: 0.35, status: { kind: 'poison', chance: 1, turns: 4, power: 0.1 } }
+    }
+  ];
+
+  const STAGES = [
+    { id: 'route_des_bandits', name: 'Route des Bandits', subtitle: 'Des pillards fouillent les caravanes.', difficulty: 1, reward: { gold: 180, sigils: 1 }, team: ['pillard_des_tourbes', 'archere_des_bois'], levels: [1, 1] },
+    { id: 'bois_aux_murmures', name: 'Bois aux Murmures', subtitle: 'La forêt refuse de laisser passer les voyageurs.', difficulty: 2, reward: { gold: 260, sigils: 1 }, team: ['sentinelle_de_chene', 'druide_des_sources', 'archere_des_bois'], levels: [1, 1, 2] },
+    { id: 'cloitre_brise', name: 'Cloître Brisé', subtitle: 'Une prière ancienne s’est changée en malédiction.', difficulty: 3, reward: { gold: 390, sigils: 2 }, team: ['novice_du_cloitre', 'sorciere_des_cendres', 'ecuyer_du_griffon'], levels: [3, 2, 3] },
+    { id: 'tour_du_beffroi', name: 'Tour du Beffroi', subtitle: 'Chaque marche dissimule une lame.', difficulty: 4, reward: { gold: 540, sigils: 2 }, team: ['assassin_du_beffroi', 'duelliste_ecarlate', 'lancier_des_falaises'], levels: [4, 4, 4] },
+    { id: 'necropole_grise', name: 'Nécropole Grise', subtitle: 'Les morts réclament le paiement de vieilles dettes.', difficulty: 5, reward: { gold: 760, sigils: 3 }, team: ['necromancienne_grise', 'seigneur_des_cryptes', 'pretresse_des_lys'], levels: [5, 4, 5] },
+    { id: 'citadelle_du_dragon', name: 'Citadelle du Dragon', subtitle: 'Le champion attend derrière les remparts.', difficulty: 6, reward: { gold: 1050, sigils: 3 }, team: ['champion_du_dragon', 'chevalier_du_soleil', 'ranger_du_loup_blanc', 'oracle_de_verre'], levels: [6, 6, 6, 6] },
+    { id: 'trone_des_ronces', name: 'Trône des Ronces', subtitle: 'La reine n’accorde aucune audience gratuite.', difficulty: 7, reward: { gold: 1500, sigils: 4 }, team: ['reine_des_ronces', 'gardienne_du_temps', 'maitre_des_lames_noires', 'archimage_des_marées'], levels: [8, 7, 8, 8] },
+    { id: 'eclipse_royale', name: 'Éclipse Royale', subtitle: 'Les légendes elles-mêmes entrent en guerre.', difficulty: 8, reward: { gold: 2400, sigils: 5 }, team: ['roi_sans_couronne', 'faucheuse_de_lune', 'saint_des_cendres', 'dragonne_d_ambre'], levels: [10, 10, 10, 10] }
+  ];
+
+  const CARD_MAP = Object.fromEntries(CARDS.map(card => [card.id, card]));
+  const STAGE_MAP = Object.fromEntries(STAGES.map(stage => [stage.id, stage]));
+
+  function validateData() {
+    const errors = [];
+    const ids = new Set();
+    for (const card of CARDS) {
+      if (ids.has(card.id)) errors.push(`Carte dupliquée: ${card.id}`);
+      ids.add(card.id);
+      if (!RARITIES[card.rarity]) errors.push(`Rareté inconnue pour ${card.id}`);
+      for (const stat of ['hp', 'physical', 'magical', 'speed']) {
+        if (!Number.isFinite(card.stats[stat]) || card.stats[stat] <= 0) errors.push(`Stat invalide ${stat} pour ${card.id}`);
+      }
+      if (!card.skill || !card.skill.name || !card.skill.type) errors.push(`Compétence invalide pour ${card.id}`);
+    }
+    const totalRate = Object.values(RARITIES).reduce((sum, rarity) => sum + rarity.rate, 0);
+    if (Math.abs(totalRate - 100) > 0.0001) errors.push(`Total des taux = ${totalRate}, attendu 100`);
+    for (const stage of STAGES) {
+      if (stage.team.length !== stage.levels.length) errors.push(`Équipe/niveaux incohérents: ${stage.id}`);
+      for (const cardId of stage.team) if (!CARD_MAP[cardId]) errors.push(`Carte inconnue ${cardId} dans ${stage.id}`);
+    }
+    return errors;
+  }
+
+  global.GameData = Object.freeze({ RARITIES, CARDS, STAGES, CARD_MAP, STAGE_MAP, validateData });
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+  <script>
+(function (global) {
+  'use strict';
+
+  const DATA = global.GameData;
+  if (!DATA) throw new Error('GameData doit être chargé avant GameCore.');
+
+  const SAVE_KEY = 'royaumes_du_hasard_save_v1';
+  const MAX_TEAM_SIZE = 4;
+  const MAX_LEVEL = 20;
+  const MAX_RESONANCE = 10;
+
+  let randomSource = Math.random;
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function integer(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.floor(number) : fallback;
+  }
+
+  function deepClone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function random() {
+    return clamp(Number(randomSource()), 0, 0.999999999);
+  }
+
+  function choose(array) {
+    return array[Math.floor(random() * array.length)];
+  }
+
+  function createDefaultState() {
+    return {
+      version: 1,
+      gold: 1200,
+      sigils: 15,
+      pityRare: 0,
+      pityEpic: 0,
+      summons: 0,
+      collection: {
+        milicien_des_marches: { level: 2, resonance: 0, copies: 1 },
+        archere_des_bois: { level: 2, resonance: 0, copies: 1 },
+        novice_du_cloitre: { level: 2, resonance: 0, copies: 1 }
+      },
+      team: ['milicien_des_marches', 'archere_des_bois', 'novice_du_cloitre'],
+      stageClears: {},
+      selectedStage: 'route_des_bandits',
+      battle: null,
+      settings: { reducedMotion: false },
+      lastSavedAt: Date.now()
+    };
+  }
+
+  function normalizeCollection(collection) {
+    const result = {};
+    if (!collection || typeof collection !== 'object') return result;
+    for (const [cardId, raw] of Object.entries(collection)) {
+      if (!DATA.CARD_MAP[cardId]) continue;
+      result[cardId] = {
+        level: clamp(integer(raw && raw.level, 1), 1, MAX_LEVEL),
+        resonance: clamp(integer(raw && raw.resonance, 0), 0, MAX_RESONANCE),
+        copies: Math.max(1, integer(raw && raw.copies, 1))
+      };
+    }
+    return result;
+  }
+
+  function normalizeState(raw) {
+    const base = createDefaultState();
+    if (!raw || typeof raw !== 'object') return base;
+    const collection = normalizeCollection(raw.collection);
+    if (Object.keys(collection).length === 0) return base;
+    const uniqueTeam = [];
+    for (const cardId of Array.isArray(raw.team) ? raw.team : []) {
+      if (collection[cardId] && !uniqueTeam.includes(cardId) && uniqueTeam.length < MAX_TEAM_SIZE) uniqueTeam.push(cardId);
+    }
+    return {
+      ...base,
+      gold: Math.max(0, integer(raw.gold, base.gold)),
+      sigils: Math.max(0, integer(raw.sigils, base.sigils)),
+      pityRare: clamp(integer(raw.pityRare, 0), 0, 9),
+      pityEpic: clamp(integer(raw.pityEpic, 0), 0, 39),
+      summons: Math.max(0, integer(raw.summons, 0)),
+      collection,
+      team: uniqueTeam.length ? uniqueTeam : [Object.keys(collection)[0]],
+      stageClears: raw.stageClears && typeof raw.stageClears === 'object' ? raw.stageClears : {},
+      selectedStage: DATA.STAGE_MAP[raw.selectedStage] ? raw.selectedStage : base.selectedStage,
+      battle: null,
+      settings: { ...base.settings, ...(raw.settings || {}) },
+      lastSavedAt: Date.now()
+    };
+  }
+
+  function loadState() {
+    try {
+      const raw = global.localStorage ? global.localStorage.getItem(SAVE_KEY) : null;
+      return raw ? normalizeState(JSON.parse(raw)) : createDefaultState();
+    } catch (error) {
+      console.warn('Sauvegarde illisible, nouvelle partie créée.', error);
+      return createDefaultState();
+    }
+  }
+
+  let state = loadState();
+
+  function serializableState() {
+    const copy = deepClone(state);
+    copy.battle = null;
+    copy.lastSavedAt = Date.now();
+    return copy;
+  }
+
+  function saveState() {
+    state.lastSavedAt = Date.now();
+    try {
+      if (global.localStorage) global.localStorage.setItem(SAVE_KEY, JSON.stringify(serializableState()));
+      return true;
+    } catch (error) {
+      console.warn('Impossible de sauvegarder localement.', error);
+      return false;
+    }
+  }
+
+  function resetState() {
+    state = createDefaultState();
+    saveState();
+    return getState();
+  }
+
+  function getState() {
+    return state;
+  }
+
+  function getOwned(cardId) {
+    return state.collection[cardId] || null;
+  }
+
+  function getStats(cardId, levelOverride, resonanceOverride) {
+    const card = DATA.CARD_MAP[cardId];
+    if (!card) return null;
+    const owned = getOwned(cardId);
+    const level = clamp(integer(levelOverride, owned ? owned.level : 1), 1, MAX_LEVEL);
+    const resonance = clamp(integer(resonanceOverride, owned ? owned.resonance : 0), 0, MAX_RESONANCE);
+    const growth = 1 + (level - 1) * 0.055 + resonance * 0.04;
+    return {
+      hp: Math.round(card.stats.hp * growth),
+      physical: Math.round(card.stats.physical * growth),
+      magical: Math.round(card.stats.magical * growth),
+      speed: Math.round(card.stats.speed * (1 + (level - 1) * 0.012 + resonance * 0.01))
+    };
+  }
+
+  function getPower(cardId, levelOverride, resonanceOverride) {
+    const stats = getStats(cardId, levelOverride, resonanceOverride);
+    if (!stats) return 0;
+    return Math.round(stats.hp * 0.28 + stats.physical * 2.15 + stats.magical * 2.15 + stats.speed * 1.25);
+  }
+
+  function getTeamPower(teamIds = state.team) {
+    return teamIds.reduce((sum, cardId) => sum + getPower(cardId), 0);
+  }
+
+  function rollRarity(minOrder = 1) {
+    const eligible = Object.values(DATA.RARITIES).filter(rarity => rarity.order >= minOrder);
+    const total = eligible.reduce((sum, rarity) => sum + rarity.rate, 0);
+    let roll = random() * total;
+    for (const rarity of eligible) {
+      roll -= rarity.rate;
+      if (roll < 0) return rarity.id;
+    }
+    return eligible[eligible.length - 1].id;
+  }
+
+  function addCard(cardId) {
+    const card = DATA.CARD_MAP[cardId];
+    if (!card) throw new Error(`Carte inconnue: ${cardId}`);
+    const owned = state.collection[cardId];
+    if (!owned) {
+      state.collection[cardId] = { level: 1, resonance: 0, copies: 1 };
+      return { cardId, isNew: true, resonanceGained: false, overflowGold: 0 };
+    }
+    owned.copies += 1;
+    if (owned.resonance < MAX_RESONANCE) {
+      owned.resonance += 1;
+      return { cardId, isNew: false, resonanceGained: true, overflowGold: 0 };
+    }
+    const overflowGold = 80 * DATA.RARITIES[card.rarity].order;
+    state.gold += overflowGold;
+    return { cardId, isNew: false, resonanceGained: false, overflowGold };
+  }
+
+  function summon(count) {
+    const amount = count === 10 ? 10 : 1;
+    if (state.sigils < amount) return { ok: false, error: `Il faut ${amount} sceau${amount > 1 ? 'x' : ''}.` };
+    state.sigils -= amount;
+    const results = [];
+    for (let index = 0; index < amount; index += 1) {
+      const minOrder = state.pityEpic >= 39 ? 4 : (state.pityRare >= 9 ? 3 : 1);
+      const rarity = rollRarity(minOrder);
+      const pool = DATA.CARDS.filter(card => card.rarity === rarity);
+      const card = choose(pool);
+      const acquisition = addCard(card.id);
+      results.push({ ...acquisition, card, rarity });
+      state.summons += 1;
+      state.pityRare = DATA.RARITIES[rarity].order >= 3 ? 0 : state.pityRare + 1;
+      state.pityEpic = DATA.RARITIES[rarity].order >= 4 ? 0 : state.pityEpic + 1;
+    }
+    saveState();
+    return { ok: true, results };
+  }
+
+  function trainingCost(cardId) {
+    const owned = getOwned(cardId);
+    const card = DATA.CARD_MAP[cardId];
+    if (!owned || !card || owned.level >= MAX_LEVEL) return null;
+    return Math.round(85 * owned.level * (0.85 + DATA.RARITIES[card.rarity].order * 0.22));
+  }
+
+  function trainCard(cardId) {
+    const owned = getOwned(cardId);
+    if (!owned) return { ok: false, error: 'Carte non possédée.' };
+    if (owned.level >= MAX_LEVEL) return { ok: false, error: 'Cette carte est déjà au niveau maximal.' };
+    const cost = trainingCost(cardId);
+    if (state.gold < cost) return { ok: false, error: `Il manque ${cost - state.gold} or.` };
+    state.gold -= cost;
+    owned.level += 1;
+    saveState();
+    return { ok: true, level: owned.level, cost };
+  }
+
+  function setTeam(cardIds) {
+    if (!Array.isArray(cardIds)) return { ok: false, error: 'Équipe invalide.' };
+    const unique = [];
+    for (const cardId of cardIds) {
+      if (!state.collection[cardId]) return { ok: false, error: `Carte non possédée: ${cardId}` };
+      if (!unique.includes(cardId)) unique.push(cardId);
+    }
+    if (unique.length < 1 || unique.length > MAX_TEAM_SIZE) return { ok: false, error: 'L’équipe doit contenir entre 1 et 4 cartes.' };
+    state.team = unique;
+    saveState();
+    return { ok: true, team: state.team.slice() };
+  }
+
+  function toggleTeamCard(cardId) {
+    if (!state.collection[cardId]) return { ok: false, error: 'Carte non possédée.' };
+    const next = state.team.slice();
+    const position = next.indexOf(cardId);
+    if (position >= 0) {
+      if (next.length === 1) return { ok: false, error: 'Il faut garder au moins une carte.' };
+      next.splice(position, 1);
+    } else {
+      if (next.length >= MAX_TEAM_SIZE) return { ok: false, error: 'Équipe complète : 4 cartes maximum.' };
+      next.push(cardId);
+    }
+    return setTeam(next);
+  }
+
+  function isStageUnlocked(stageId) {
+    const index = DATA.STAGES.findIndex(stage => stage.id === stageId);
+    if (index <= 0) return index === 0;
+    return integer(state.stageClears[DATA.STAGES[index - 1].id], 0) > 0;
+  }
+
+  function createUnit(cardId, level, resonance, side, slot) {
+    const stats = getStats(cardId, level, resonance);
+    return {
+      uid: `${side}-${slot}-${cardId}`,
+      cardId,
+      level,
+      resonance,
+      maxHp: stats.hp,
+      hp: stats.hp,
+      physical: stats.physical,
+      magical: stats.magical,
+      speed: stats.speed,
+      shield: 0,
+      guard: false,
+      cooldown: 0,
+      statuses: [],
+      side,
+      slot
+    };
+  }
+
+  function startBattle(stageId) {
+    const stage = DATA.STAGE_MAP[stageId];
+    if (!stage) return { ok: false, error: 'Combat inconnu.' };
+    if (!isStageUnlocked(stageId)) return { ok: false, error: 'Termine le combat précédent pour débloquer celui-ci.' };
+    if (!state.team.length) return { ok: false, error: 'Crée une équipe avant de combattre.' };
+    const playerUnits = state.team.map((cardId, index) => {
+      const owned = state.collection[cardId];
+      return createUnit(cardId, owned.level, owned.resonance, 'player', index);
+    });
+    const enemyUnits = stage.team.map((cardId, index) => createUnit(cardId, stage.levels[index], 0, 'enemy', index));
+    state.selectedStage = stageId;
+    state.battle = {
+      stageId,
+      round: 1,
+      player: { units: playerUnits, active: 0 },
+      enemy: { units: enemyUnits, active: 0 },
+      waitingForPlayer: true,
+      over: false,
+      winner: null,
+      reward: null,
+      log: [`Le combat commence dans « ${stage.name} ».`, 'Choisis l’action de ta carte active.']
+    };
+    saveState();
+    return { ok: true, battle: state.battle };
+  }
+
+  function currentUnit(side) {
+    const battle = state.battle;
+    if (!battle) return null;
+    const group = battle[side];
+    return group.units[group.active] || null;
+  }
+
+  function livingBench(side) {
+    const battle = state.battle;
+    if (!battle) return [];
+    return battle[side].units.filter((unit, index) => index !== battle[side].active && unit.hp > 0);
+  }
+
+  function effectiveSpeed(unit) {
+    let result = unit.speed;
+    for (const status of unit.statuses) {
+      if (status.kind === 'speed') result += status.amount || 0;
+      if (status.kind === 'slow') result -= status.amount || 0;
+    }
+    return Math.max(1, result);
+  }
+
+  function hasStatus(unit, kind) {
+    return unit.statuses.some(status => status.kind === kind && status.turns > 0);
+  }
+
+  function addStatus(unit, status) {
+    if (!status || !status.kind) return;
+    const existing = unit.statuses.find(entry => entry.kind === status.kind);
+    const normalized = {
+      kind: status.kind,
+      turns: Math.max(1, integer(status.turns, 1)),
+      power: Number(status.power) || 0,
+      amount: Number(status.amount) || 0,
+      source: status.source || null
+    };
+    if (existing) {
+      existing.turns = Math.max(existing.turns, normalized.turns);
+      existing.power = Math.max(existing.power || 0, normalized.power || 0);
+      existing.amount = Math.max(existing.amount || 0, normalized.amount || 0);
+    } else {
+      unit.statuses.push(normalized);
+    }
+  }
+
+  function removeNegativeStatuses(unit) {
+    const negative = new Set(['burn', 'poison', 'bleed', 'slow', 'stun']);
+    unit.statuses = unit.statuses.filter(status => !negative.has(status.kind));
+  }
+
+  function unitName(unit) {
+    return DATA.CARD_MAP[unit.cardId].name;
+  }
+
+  function log(message) {
+    const battle = state.battle;
+    if (!battle) return;
+    battle.log.push(message);
+    if (battle.log.length > 80) battle.log.splice(0, battle.log.length - 80);
+  }
+
+  function heal(unit, amount) {
+    const value = Math.max(0, Math.round(amount));
+    const before = unit.hp;
+    unit.hp = clamp(unit.hp + value, 0, unit.maxHp);
+    return unit.hp - before;
+  }
+
+  function applyDamage(target, rawAmount, options = {}) {
+    let amount = Math.max(1, Math.round(rawAmount));
+    if (target.guard) amount = Math.max(1, Math.round(amount * 0.5));
+    let absorbed = 0;
+    if (!options.pierceShield && target.shield > 0) {
+      absorbed = Math.min(target.shield, amount);
+      target.shield -= absorbed;
+      amount -= absorbed;
+    }
+    const dealt = Math.min(target.hp, Math.max(0, amount));
+    target.hp -= dealt;
+    return { dealt, absorbed, total: dealt + absorbed };
+  }
+
+  function baseAttackValue(actor, scaling) {
+    if (scaling === 'magical') return actor.magical;
+    if (scaling === 'hybrid') return actor.physical * 0.62 + actor.magical * 0.62;
+    if (scaling === 'hp') return actor.maxHp;
+    return actor.physical;
+  }
+
+  function variance(multiplier = 0.1) {
+    return 1 - multiplier + random() * multiplier * 2;
+  }
+
+  function resolveAttack(actor, target, action, skill) {
+    const scaling = action.type === 'magical' ? 'magical' : (action.type === 'physical' ? 'physical' : skill.scaling);
+    const actionMultiplier = action.type === 'skill' ? (skill.multiplier || 1) : 1;
+    const spread = skill && skill.variance != null ? skill.variance : 0.1;
+    let raw = baseAttackValue(actor, scaling) * actionMultiplier * variance(spread);
+    if (skill && skill.execute && target.hp / target.maxHp <= skill.execute) raw *= 1.45;
+    const result = applyDamage(target, raw, { pierceShield: Boolean(skill && skill.pierceShield) });
+    const actionLabel = action.type === 'skill' ? skill.name : (action.type === 'physical' ? 'attaque physique' : 'attaque magique');
+    log(`${unitName(actor)} utilise ${actionLabel} : ${result.dealt} dégâts${result.absorbed ? ` (${result.absorbed} absorbés)` : ''}.`);
+
+    if (skill) {
+      if (skill.status && random() < (skill.status.chance == null ? 1 : skill.status.chance)) {
+        addStatus(target, { ...skill.status, source: actor.uid });
+        const labels = { burn: 'Brûlure', poison: 'Poison', bleed: 'Saignement', slow: 'Lenteur', stun: 'Étourdissement' };
+        log(`${unitName(target)} subit ${labels[skill.status.kind] || skill.status.kind}.`);
+      }
+      if (skill.drain) {
+        const restored = heal(actor, result.dealt * skill.drain);
+        if (restored > 0) log(`${unitName(actor)} absorbe ${restored} PV.`);
+      }
+      if (skill.healRatio) {
+        const restored = heal(actor, actor.maxHp * skill.healRatio);
+        if (restored > 0) log(`${unitName(actor)} récupère ${restored} PV.`);
+      }
+      if (skill.shieldRatio) {
+        const shield = Math.round(actor.maxHp * skill.shieldRatio);
+        actor.shield += shield;
+        log(`${unitName(actor)} gagne ${shield} bouclier.`);
+      }
+      if (skill.recoil) {
+        const recoil = Math.max(1, Math.round(actor.maxHp * skill.recoil));
+        actor.hp = Math.max(1, actor.hp - recoil);
+        log(`${unitName(actor)} perd ${recoil} PV de contrecoup.`);
+      }
+      if (skill.buff) {
+        addStatus(actor, skill.buff);
+        log(`${unitName(actor)} gagne ${skill.buff.amount} VIT pendant ${skill.buff.turns} tours.`);
+      }
+    }
+
+    const thorns = target.statuses.find(status => status.kind === 'thorns');
+    if (thorns && actor.hp > 0 && result.dealt > 0) {
+      const reflected = Math.max(1, Math.round(result.dealt * thorns.power));
+      actor.hp = Math.max(0, actor.hp - reflected);
+      log(`${unitName(actor)} subit ${reflected} dégâts d’épines.`);
+    }
+  }
+
+  function lowestLivingUnit(side) {
+    const units = state.battle[side].units.filter(unit => unit.hp > 0);
+    return units.sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0] || null;
+  }
+
+  function resolveSkill(actor, target, skill) {
+    if (skill.type === 'attack') {
+      resolveAttack(actor, target, { type: 'skill' }, skill);
+      return;
+    }
+    if (skill.type === 'heal') {
+      const side = actor.side;
+      const targets = skill.target === 'team'
+        ? state.battle[side].units.filter(unit => unit.hp > 0)
+        : [skill.target === 'lowestAlly' ? lowestLivingUnit(side) : actor].filter(Boolean);
+      for (const ally of targets) {
+        const factor = skill.target === 'team' ? (skill.teamRatio || 0.4) : 1;
+        const restored = heal(ally, baseAttackValue(actor, skill.scaling) * skill.multiplier * factor);
+        if (restored > 0) log(`${unitName(actor)} rend ${restored} PV à ${unitName(ally)}.`);
+        if (skill.buff) addStatus(ally, skill.buff);
+        if (skill.cleanse) removeNegativeStatuses(ally);
+      }
+      return;
+    }
+    if (skill.type === 'shield') {
+      const amount = Math.max(1, Math.round(baseAttackValue(actor, skill.scaling) * skill.multiplier));
+      actor.shield += amount;
+      if (skill.healRatio) heal(actor, actor.maxHp * skill.healRatio);
+      if (skill.thorns) addStatus(actor, { kind: 'thorns', turns: 3, power: skill.thorns });
+      log(`${unitName(actor)} obtient ${amount} bouclier.`);
+    }
+  }
+
+  function autoSwitch(side) {
+    const battle = state.battle;
+    const group = battle[side];
+    const current = group.units[group.active];
+    if (current && current.hp > 0) return false;
+    const nextIndex = group.units.findIndex(unit => unit.hp > 0);
+    if (nextIndex >= 0) {
+      group.active = nextIndex;
+      log(`${unitName(group.units[nextIndex])} entre en combat pour ${side === 'player' ? 'ton équipe' : 'l’adversaire'}.`);
+      return true;
+    }
+    return false;
+  }
+
+  function checkBattleEnd() {
+    const battle = state.battle;
+    const playerAlive = battle.player.units.some(unit => unit.hp > 0);
+    const enemyAlive = battle.enemy.units.some(unit => unit.hp > 0);
+    if (playerAlive && enemyAlive) return false;
+    battle.over = true;
+    battle.waitingForPlayer = false;
+    battle.winner = playerAlive ? 'player' : 'enemy';
+    if (battle.winner === 'player') {
+      const stage = DATA.STAGE_MAP[battle.stageId];
+      const clears = integer(state.stageClears[stage.id], 0);
+      const multiplier = clears === 0 ? 1 : 0.35;
+      const reward = {
+        gold: Math.max(1, Math.round(stage.reward.gold * multiplier)),
+        sigils: clears === 0 ? stage.reward.sigils : (random() < 0.25 ? 1 : 0)
+      };
+      state.gold += reward.gold;
+      state.sigils += reward.sigils;
+      state.stageClears[stage.id] = clears + 1;
+      battle.reward = reward;
+      log(`Victoire ! Récompense : ${reward.gold} or${reward.sigils ? ` et ${reward.sigils} sceau(x)` : ''}.`);
+    } else {
+      log('Défaite. Entraîne tes cartes ou change la composition de ton équipe.');
+    }
+    saveState();
+    return true;
+  }
+
+  function executeAction(side, action, actorReference) {
+    const actor = actorReference || currentUnit(side);
+    if (!actor || actor.hp <= 0 || actor !== currentUnit(side)) return;
+    const opponentSide = side === 'player' ? 'enemy' : 'player';
+    const target = currentUnit(opponentSide);
+    if (!target || target.hp <= 0) return;
+
+    if (hasStatus(actor, 'stun')) {
+      const stun = actor.statuses.find(status => status.kind === 'stun');
+      stun.turns -= 1;
+      actor.statuses = actor.statuses.filter(status => status.turns > 0);
+      log(`${unitName(actor)} est étourdi et perd son tour.`);
+      return;
+    }
+
+    if (action.type === 'switch') {
+      const group = state.battle[side];
+      const targetIndex = integer(action.targetIndex, -1);
+      const next = group.units[targetIndex];
+      if (next && next.hp > 0 && targetIndex !== group.active) {
+        group.active = targetIndex;
+        log(`${unitName(next)} remplace ${unitName(actor)}.`);
+      }
+      return;
+    }
+
+    if (action.type === 'guard') {
+      actor.guard = true;
+      log(`${unitName(actor)} se met en garde : les dégâts reçus ce tour sont divisés par deux.`);
+      return;
+    }
+
+    if (action.type === 'physical' || action.type === 'magical') {
+      resolveAttack(actor, target, action, null);
+      return;
+    }
+
+    if (action.type === 'skill') {
+      const card = DATA.CARD_MAP[actor.cardId];
+      if (actor.cooldown > 0) {
+        log(`${card.skill.name} n’est pas encore disponible.`);
+        return;
+      }
+      resolveSkill(actor, target, card.skill);
+      actor.cooldown = card.skill.cooldown + 1;
+    }
+  }
+
+  function chooseEnemyAction() {
+    const actor = currentUnit('enemy');
+    if (!actor) return { type: 'guard' };
+    const card = DATA.CARD_MAP[actor.cardId];
+    const skill = card.skill;
+    const healthRatio = actor.hp / actor.maxHp;
+    const bench = livingBench('enemy');
+    if (healthRatio < 0.2 && bench.length && random() < 0.32) {
+      const best = bench.sort((a, b) => b.hp / b.maxHp - a.hp / a.maxHp)[0];
+      return { type: 'switch', targetIndex: best.slot };
+    }
+    if (actor.cooldown === 0) {
+      if (skill.type === 'heal') {
+        const lowest = lowestLivingUnit('enemy');
+        if (lowest && lowest.hp / lowest.maxHp < 0.68) return { type: 'skill' };
+      } else if (skill.type === 'shield' && (actor.shield === 0 || healthRatio < 0.6)) {
+        return { type: 'skill' };
+      } else if (random() < 0.62) {
+        return { type: 'skill' };
+      }
+    }
+    if (healthRatio < 0.28 && random() < 0.2) return { type: 'guard' };
+    return actor.magical > actor.physical * 1.08 ? { type: 'magical' } : { type: 'physical' };
+  }
+
+  function tickStatuses(unit) {
+    if (unit.hp <= 0) return;
+    for (const status of unit.statuses) {
+      if (['burn', 'poison', 'bleed'].includes(status.kind)) {
+        const amount = Math.max(1, Math.round(unit.maxHp * status.power));
+        unit.hp = Math.max(0, unit.hp - amount);
+        const labels = { burn: 'brûlure', poison: 'poison', bleed: 'saignement' };
+        log(`${unitName(unit)} perd ${amount} PV à cause de ${labels[status.kind]}.`);
+      }
+      if (status.kind !== 'stun') status.turns -= 1;
+    }
+    unit.statuses = unit.statuses.filter(status => status.turns > 0);
+  }
+
+  function endRound() {
+    const battle = state.battle;
+    for (const side of ['player', 'enemy']) {
+      for (const unit of battle[side].units) {
+        unit.guard = false;
+        if (unit.cooldown > 0) unit.cooldown -= 1;
+      }
+      tickStatuses(currentUnit(side));
+      autoSwitch(side);
+    }
+    if (!checkBattleEnd()) {
+      battle.round += 1;
+      battle.waitingForPlayer = true;
+      log(`— Tour ${battle.round} —`);
+    }
+  }
+
+  function validatePlayerAction(action) {
+    if (!action || typeof action.type !== 'string') return 'Action invalide.';
+    const allowed = new Set(['physical', 'magical', 'skill', 'guard', 'switch']);
+    if (!allowed.has(action.type)) return 'Action inconnue.';
+    const actor = currentUnit('player');
+    if (!actor || actor.hp <= 0) return 'Aucune carte active.';
+    if (action.type === 'skill' && actor.cooldown > 0) return `Compétence disponible dans ${actor.cooldown} tour(s).`;
+    if (action.type === 'switch') {
+      const targetIndex = integer(action.targetIndex, -1);
+      const next = state.battle.player.units[targetIndex];
+      if (!next || next.hp <= 0 || targetIndex === state.battle.player.active) return 'Remplacement impossible.';
+    }
+    return null;
+  }
+
+  function performPlayerAction(action) {
+    const battle = state.battle;
+    if (!battle) return { ok: false, error: 'Aucun combat en cours.' };
+    if (battle.over) return { ok: false, error: 'Le combat est terminé.' };
+    if (!battle.waitingForPlayer) return { ok: false, error: 'Attends la fin du tour.' };
+    const validationError = validatePlayerAction(action);
+    if (validationError) return { ok: false, error: validationError };
+
+    battle.waitingForPlayer = false;
+    const playerActor = currentUnit('player');
+    const enemyActor = currentUnit('enemy');
+    const enemyAction = chooseEnemyAction();
+    const playerPriority = action.type === 'switch' ? 10000 : effectiveSpeed(playerActor);
+    const enemyPriority = enemyAction.type === 'switch' ? 10000 : effectiveSpeed(enemyActor);
+    const order = playerPriority === enemyPriority
+      ? (random() < 0.5 ? ['player', 'enemy'] : ['enemy', 'player'])
+      : (playerPriority > enemyPriority ? ['player', 'enemy'] : ['enemy', 'player']);
+
+    for (const side of order) {
+      if (checkBattleEnd()) break;
+      if (side === 'player') executeAction('player', action, playerActor);
+      else executeAction('enemy', enemyAction, enemyActor);
+      autoSwitch('player');
+      autoSwitch('enemy');
+    }
+    if (!battle.over) endRound();
+    saveState();
+    return { ok: true, battle };
+  }
+
+  function abandonBattle() {
+    if (!state.battle) return { ok: false, error: 'Aucun combat en cours.' };
+    state.battle = null;
+    saveState();
+    return { ok: true };
+  }
+
+  function exportSave() {
+    try {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(serializableState()))));
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function importSave(encoded) {
+    try {
+      const decoded = decodeURIComponent(escape(atob(String(encoded).trim())));
+      state = normalizeState(JSON.parse(decoded));
+      saveState();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Code de sauvegarde invalide.' };
+    }
+  }
+
+  function setRandomSource(fn) {
+    randomSource = typeof fn === 'function' ? fn : Math.random;
+  }
+
+  function debugSetState(next) {
+    state = normalizeState(next);
+    state.battle = next && next.battle ? deepClone(next.battle) : null;
+  }
+
+  global.GameCore = {
+    SAVE_KEY,
+    MAX_TEAM_SIZE,
+    MAX_LEVEL,
+    MAX_RESONANCE,
+    getState,
+    getOwned,
+    getStats,
+    getPower,
+    getTeamPower,
+    summon,
+    trainingCost,
+    trainCard,
+    setTeam,
+    toggleTeamCard,
+    isStageUnlocked,
+    startBattle,
+    performPlayerAction,
+    abandonBattle,
+    currentUnit,
+    livingBench,
+    saveState,
+    resetState,
+    exportSave,
+    importSave,
+    normalizeState,
+    createDefaultState,
+    setRandomSource,
+    debugSetState
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+  <script>
+(function (global) {
+  'use strict';
+
+  const Data = global.GameData;
+  const Core = global.GameCore;
+  if (!Data || !Core) throw new Error('Les modules du jeu ne sont pas chargés.');
+
+  const ui = {
+    tab: 'summon',
+    filter: 'all',
+    sort: 'power',
+    search: '',
+    modal: null,
+    importText: ''
+  };
+
+  const app = document.getElementById('app');
+  const modalRoot = document.getElementById('modal-root');
+  const toastRoot = document.getElementById('toast-root');
+  const numberFormat = new Intl.NumberFormat('fr-FR');
+
+  function escapeHTML(value) {
+    return String(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function format(value) {
+    return numberFormat.format(Math.round(Number(value) || 0));
+  }
+
+  function rarityStyle(card) {
+    return `--rarity:${Data.RARITIES[card.rarity].color}`;
+  }
+
+  function toast(message, type = '') {
+    const node = document.createElement('div');
+    node.className = `toast ${type}`.trim();
+    node.textContent = message;
+    toastRoot.appendChild(node);
+    global.setTimeout(() => node.remove(), 2800);
+  }
+
+  function navButton(tab, icon, label) {
+    const activeTab = ui.tab === 'battle' ? 'adventure' : ui.tab;
+    return `<button class="nav-btn ${activeTab === tab ? 'active' : ''}" data-action="navigate" data-tab="${tab}" aria-label="${label}"><span>${icon}</span><span>${label}</span></button>`;
+  }
+
+  function renderShell(content) {
+    const state = Core.getState();
+    app.innerHTML = `
+      <div class="app-shell">
+        <header class="topbar">
+          <div class="brand">
+            <h1>Royaumes du Hasard</h1>
+            <small>Collection médiévale-fantastique</small>
+          </div>
+          <div class="resources">
+            <div class="resource-pill">◈ <strong>${format(state.sigils)}</strong></div>
+            <div class="resource-pill">● <strong>${format(state.gold)}</strong></div>
+            <button class="icon-button" data-action="settings-open" aria-label="Sauvegarde et options">⚙</button>
+          </div>
+        </header>
+        <nav class="bottom-nav" aria-label="Navigation principale">
+          ${navButton('summon', '✺', 'Invocation')}
+          ${navButton('collection', '▦', 'Collection')}
+          ${navButton('team', '♜', 'Équipe')}
+          ${navButton('adventure', '⚔', 'Aventure')}
+        </nav>
+        <main>${content}</main>
+      </div>`;
+    renderModal();
+  }
+
+  function render() {
+    let content = '';
+    if (ui.tab === 'summon') content = summonView();
+    else if (ui.tab === 'collection') content = collectionView();
+    else if (ui.tab === 'team') content = teamView();
+    else if (ui.tab === 'adventure') content = adventureView();
+    else if (ui.tab === 'battle') content = battleView();
+    else content = summonView();
+    renderShell(content);
+  }
+
+  function summonView() {
+    const state = Core.getState();
+    const rates = Object.values(Data.RARITIES).map(rarity => `
+      <div class="rate-item">
+        <strong style="color:${rarity.color}">${rarity.rate}%</strong>
+        <span class="small">${rarity.label}</span>
+      </div>`).join('');
+    return `
+      <section>
+        <div class="summon-banner panel">
+          <h2>Le Portail des Âges</h2>
+          <p>Invoque des guerriers, mages, assassins et souverains. Les cartes rares ont de meilleures statistiques, mais une équipe cohérente reste plus forte qu’un simple tas de légendes.</p>
+          <div class="summon-actions">
+            <button class="primary-btn" data-action="summon" data-count="1" ${state.sigils < 1 ? 'disabled' : ''}>Invoquer ×1 · 1 ◈</button>
+            <button class="primary-btn" data-action="summon" data-count="10" ${state.sigils < 10 ? 'disabled' : ''}>Invoquer ×10 · 10 ◈</button>
+          </div>
+        </div>
+        <div class="panel panel-pad" style="margin-top:14px">
+          <h3 class="section-title"><span>Probabilités</span><span class="small muted">${state.summons} invocation(s)</span></h3>
+          <div class="rate-grid">${rates}</div>
+          <div class="pity-box">
+            <div><div class="small muted">Garantie Rare ou mieux : ${state.pityRare}/9</div><div class="progress"><span style="width:${state.pityRare / 9 * 100}%"></span></div></div>
+            <div><div class="small muted">Garantie Épique ou mieux : ${state.pityEpic}/39</div><div class="progress"><span style="width:${state.pityEpic / 39 * 100}%"></span></div></div>
+          </div>
+          <p class="small muted" style="margin-bottom:0">Un doublon augmente la Résonance de la carte (+4 % aux statistiques principales, jusqu’à +10). Au-delà, il est converti en or.</p>
+        </div>
+      </section>`;
+  }
+
+  function cardTile(card, options = {}) {
+    const owned = Core.getOwned(card.id);
+    const level = owned ? owned.level : 1;
+    const resonance = owned ? owned.resonance : 0;
+    const stats = Core.getStats(card.id, level, resonance);
+    const inTeam = Core.getState().team.includes(card.id);
+    const action = options.action || 'open-card';
+    return `
+      <button class="game-card card-button ${options.selected ? 'selected' : ''}" style="${rarityStyle(card)}" data-action="${action}" data-card-id="${card.id}">
+        ${inTeam && options.showTeamMark !== false ? '<span class="team-mark">✓</span>' : ''}
+        <div class="card-top"><span class="card-rarity">${Data.RARITIES[card.rarity].label}</span><span class="card-level">Niv. ${level}${resonance ? ` · R${resonance}` : ''}</span></div>
+        <div class="card-art" aria-hidden="true">${card.icon}</div>
+        <h3 class="card-name">${escapeHTML(card.name)}</h3>
+        <div class="card-role">${escapeHTML(card.faction)} · ${escapeHTML(card.role)}</div>
+        <div class="card-stats">
+          <span class="stat-chip">♥ ${format(stats.hp)}</span>
+          <span class="stat-chip">⚔ ${format(stats.physical)}</span>
+          <span class="stat-chip">✦ ${format(stats.magical)}</span>
+          <span class="stat-chip">➤ ${format(stats.speed)}</span>
+        </div>
+      </button>`;
+  }
+
+  function ownedCardsSorted() {
+    const state = Core.getState();
+    const query = ui.search.trim().toLocaleLowerCase('fr');
+    const cards = Data.CARDS.filter(card => state.collection[card.id])
+      .filter(card => ui.filter === 'all' || card.rarity === ui.filter)
+      .filter(card => !query || `${card.name} ${card.faction} ${card.role}`.toLocaleLowerCase('fr').includes(query));
+    cards.sort((a, b) => {
+      if (ui.sort === 'rarity') return Data.RARITIES[b.rarity].order - Data.RARITIES[a.rarity].order || a.name.localeCompare(b.name, 'fr');
+      if (ui.sort === 'level') return state.collection[b.id].level - state.collection[a.id].level || Core.getPower(b.id) - Core.getPower(a.id);
+      if (ui.sort === 'name') return a.name.localeCompare(b.name, 'fr');
+      return Core.getPower(b.id) - Core.getPower(a.id);
+    });
+    return cards;
+  }
+
+  function collectionView() {
+    const state = Core.getState();
+    const filters = [{ id: 'all', label: 'Toutes' }, ...Object.values(Data.RARITIES).map(r => ({ id: r.id, label: r.label }))]
+      .map(filter => `<button class="filter-chip ${ui.filter === filter.id ? 'active' : ''}" data-action="filter" data-filter="${filter.id}">${filter.label}</button>`).join('');
+    const cards = ownedCardsSorted();
+    return `
+      <section>
+        <h2 class="view-title">Collection</h2>
+        <p class="view-subtitle">${Object.keys(state.collection).length}/${Data.CARDS.length} cartes obtenues. Ouvre une carte pour l’entraîner et consulter sa compétence.</p>
+        <div class="toolbar">
+          <input type="search" value="${escapeHTML(ui.search)}" data-input="search" placeholder="Nom, faction, rôle…" aria-label="Rechercher une carte">
+          <select data-input="sort" aria-label="Trier les cartes">
+            <option value="power" ${ui.sort === 'power' ? 'selected' : ''}>Puissance</option>
+            <option value="rarity" ${ui.sort === 'rarity' ? 'selected' : ''}>Rareté</option>
+            <option value="level" ${ui.sort === 'level' ? 'selected' : ''}>Niveau</option>
+            <option value="name" ${ui.sort === 'name' ? 'selected' : ''}>Nom</option>
+          </select>
+        </div>
+        <div class="filter-row">${filters}</div>
+        ${cards.length ? `<div class="card-grid">${cards.map(card => cardTile(card)).join('')}</div>` : '<div class="panel empty-state">Aucune carte ne correspond à ce filtre.</div>'}
+      </section>`;
+  }
+
+  function teamView() {
+    const state = Core.getState();
+    const slots = Array.from({ length: 4 }, (_, index) => {
+      const cardId = state.team[index];
+      if (!cardId) return `<div class="team-slot"><div><div class="slot-icon">＋</div><div class="slot-name">Emplacement libre</div></div></div>`;
+      const card = Data.CARD_MAP[cardId];
+      return `<button class="team-slot filled" style="${rarityStyle(card)};border-color:${Data.RARITIES[card.rarity].color}" data-action="team-toggle" data-card-id="${card.id}"><div><div class="slot-icon">${card.icon}</div><div class="slot-name">${escapeHTML(card.name)}</div><div class="small muted">Niv. ${state.collection[card.id].level}</div></div></button>`;
+    }).join('');
+    const cards = ownedCardsSorted();
+    return `
+      <section>
+        <h2 class="view-title">Équipe</h2>
+        <p class="view-subtitle">Choisis jusqu’à quatre cartes. La première est envoyée au combat, les autres restent en réserve et peuvent être remplacées pendant le duel.</p>
+        <div class="panel panel-pad">
+          <div class="team-summary"><strong>Puissance totale</strong><strong style="color:var(--gold)">${format(Core.getTeamPower())}</strong></div>
+          <div class="team-slots">${slots}</div>
+          <p class="small muted" style="margin:0">Touche une carte de l’équipe pour la retirer, ou une carte ci-dessous pour l’ajouter.</p>
+        </div>
+        <div style="height:14px"></div>
+        <div class="card-grid">${cards.map(card => cardTile(card, { action: 'team-toggle', selected: state.team.includes(card.id) })).join('')}</div>
+      </section>`;
+  }
+
+  function stageCard(stage, index) {
+    const state = Core.getState();
+    const unlocked = Core.isStageUnlocked(stage.id);
+    const clears = Number(state.stageClears[stage.id] || 0);
+    const enemyCards = stage.team.map((cardId, teamIndex) => {
+      const card = Data.CARD_MAP[cardId];
+      return `<div class="mini-portrait" title="${escapeHTML(card.name)}" style="${rarityStyle(card)}"><span>${card.icon}</span><small>Niv.${stage.levels[teamIndex]}</small></div>`;
+    }).join('');
+    return `
+      <article class="stage-card panel ${unlocked ? '' : 'locked'}">
+        <div class="stage-head">
+          <div><h3>${index + 1}. ${escapeHTML(stage.name)}</h3><div class="small muted">${escapeHTML(stage.subtitle)}</div></div>
+          <div class="difficulty">${'◆'.repeat(stage.difficulty)}</div>
+        </div>
+        <div class="enemy-preview">${enemyCards}</div>
+        <div class="reward-line">Première victoire : ${format(stage.reward.gold)} or · ${stage.reward.sigils} sceau(x)</div>
+        <div class="button-row">
+          <div style="flex:1">${clears ? `<span class="cleared-badge">✓ Vaincu ${clears} fois</span>` : unlocked ? '<span class="small muted">Nouveau combat</span>' : '<span class="small muted">Verrouillé</span>'}</div>
+          <button class="primary-btn" data-action="stage-start" data-stage-id="${stage.id}" ${unlocked ? '' : 'disabled'}>${clears ? 'Rejouer' : 'Combattre'}</button>
+        </div>
+      </article>`;
+  }
+
+  function adventureView() {
+    return `
+      <section>
+        <h2 class="view-title">Aventure PvE</h2>
+        <p class="view-subtitle">Affronte des PNJ qui possèdent leurs propres équipes. Chaque première victoire débloque le combat suivant.</p>
+        <div class="stage-list">${Data.STAGES.map(stageCard).join('')}</div>
+      </section>`;
+  }
+
+  function statusHTML(unit) {
+    const labels = { burn: '🔥 Brûlure', poison: '☠ Poison', bleed: '🩸 Saignement', slow: '↓ Lenteur', speed: '↑ Vitesse', stun: '✹ Étourdi', thorns: '✥ Épines' };
+    return unit.statuses.map(status => `<span class="status">${labels[status.kind] || status.kind} ${status.turns}</span>`).join('');
+  }
+
+  function fighterHTML(unit, side) {
+    const card = Data.CARD_MAP[unit.cardId];
+    const hpPercent = clampPercent(unit.hp / unit.maxHp * 100);
+    const shieldPercent = clampPercent(unit.shield / unit.maxHp * 100);
+    return `
+      <div class="fighter ${side === 'enemy' ? 'enemy' : ''}" style="${rarityStyle(card)}">
+        <div class="fighter-art">${card.icon}</div>
+        <h3>${escapeHTML(card.name)}</h3>
+        <div class="fighter-meta">Niv. ${unit.level} · VIT ${format(unit.speed)} · ${escapeHTML(card.role)}</div>
+        <div class="hp-line"><span>PV</span><strong>${format(unit.hp)}/${format(unit.maxHp)}</strong></div>
+        <div class="hp-bar"><span style="width:${hpPercent}%"></span></div>
+        ${unit.shield > 0 ? `<div class="shield-bar" title="Bouclier ${format(unit.shield)}"><span style="width:${shieldPercent}%"></span></div>` : ''}
+        <div class="status-row">${statusHTML(unit)}</div>
+      </div>`;
+  }
+
+  function clampPercent(value) {
+    return Math.max(0, Math.min(100, Number(value) || 0));
+  }
+
+  function benchHTML(side) {
+    const battle = Core.getState().battle;
+    const group = battle[side];
+    return group.units.map((unit, index) => {
+      if (index === group.active) return '';
+      const card = Data.CARD_MAP[unit.cardId];
+      const clickable = side === 'player' && unit.hp > 0 && !battle.over;
+      const tag = clickable ? 'button' : 'div';
+      return `<${tag} class="bench-card ${unit.hp <= 0 ? 'dead' : ''}" style="${rarityStyle(card)}" ${clickable ? `data-action="switch-to" data-index="${index}" aria-label="Remplacer par ${escapeHTML(card.name)}"` : ''} title="${escapeHTML(card.name)}">
+        <span>${card.icon}</span><div class="bench-hp"><span style="width:${clampPercent(unit.hp / unit.maxHp * 100)}%"></span></div>
+      </${tag}>`;
+    }).join('') || '<span class="small muted">Aucune réserve</span>';
+  }
+
+  function battleActions(player) {
+    const card = Data.CARD_MAP[player.cardId];
+    const battle = Core.getState().battle;
+    const disabled = battle.over || !battle.waitingForPlayer;
+    return `
+      <div class="action-grid">
+        <button class="action-btn" data-action="battle-action" data-type="physical" ${disabled ? 'disabled' : ''}><strong>⚔ Attaque physique</strong><small>Puissance ${format(player.physical)}</small></button>
+        <button class="action-btn" data-action="battle-action" data-type="magical" ${disabled ? 'disabled' : ''}><strong>✦ Attaque magique</strong><small>Puissance ${format(player.magical)}</small></button>
+        <button class="action-btn skill" data-action="battle-action" data-type="skill" ${disabled || player.cooldown > 0 ? 'disabled' : ''}><strong>✺ ${escapeHTML(card.skill.name)}</strong><small>${player.cooldown > 0 ? `Recharge : ${player.cooldown} tour(s)` : skillDescription(card.skill)}</small></button>
+        <button class="action-btn" data-action="battle-action" data-type="guard" ${disabled ? 'disabled' : ''}><strong>🛡 Garde</strong><small>−50 % dégâts ce tour</small></button>
+        <button class="action-btn" data-action="switch-open" ${disabled || Core.livingBench('player').length === 0 ? 'disabled' : ''}><strong>⇄ Remplacer</strong><small>Change la carte active</small></button>
+      </div>`;
+  }
+
+  function skillDescription(skill) {
+    if (skill.type === 'heal') return 'Soin de l’équipe ou de l’allié blessé';
+    if (skill.type === 'shield') return 'Bouclier défensif';
+    const scaling = skill.scaling === 'magical' ? 'magique' : skill.scaling === 'hybrid' ? 'hybride' : 'physique';
+    return `Attaque ${scaling} ×${skill.multiplier || 1}`;
+  }
+
+  function battleView() {
+    const battle = Core.getState().battle;
+    if (!battle) {
+      ui.tab = 'adventure';
+      return adventureView();
+    }
+    const stage = Data.STAGE_MAP[battle.stageId];
+    const player = Core.currentUnit('player');
+    const enemy = Core.currentUnit('enemy');
+    const resultPanel = battle.over ? `
+      <div class="panel panel-pad">
+        <h3 class="section-title"><span>${battle.winner === 'player' ? 'Victoire' : 'Défaite'}</span></h3>
+        <p>${battle.winner === 'player' ? `Tu remportes ${format(battle.reward.gold)} or${battle.reward.sigils ? ` et ${battle.reward.sigils} sceau(x)` : ''}.` : 'La composition adverse a gagné. Tu peux entraîner tes cartes, changer ton équipe ou retenter le combat.'}</p>
+        <div class="button-row"><button class="primary-btn" data-action="battle-leave">Retour à l’aventure</button></div>
+      </div>` : '';
+    return `
+      <section class="battle-wrap">
+        <div class="battle-header"><div><h2 class="view-title" style="margin-bottom:0">${escapeHTML(stage.name)}</h2><div class="small muted">Tour ${battle.round}</div></div><button class="secondary-btn" data-action="battle-abandon">Abandonner</button></div>
+        <div class="arena panel">
+          ${fighterHTML(player, 'player')}
+          <div class="vs">VS</div>
+          ${fighterHTML(enemy, 'enemy')}
+          <div class="bench">${benchHTML('player')}</div>
+          <div></div>
+          <div class="bench enemy-bench">${benchHTML('enemy')}</div>
+        </div>
+        ${resultPanel || `<div class="actions-panel panel">${battleActions(player)}</div>`}
+        <div class="combat-log panel">${battle.log.slice(-12).map(line => `<p>${escapeHTML(line)}</p>`).join('')}</div>
+      </section>`;
+  }
+
+  function openModal(type, payload = {}) {
+    ui.modal = { type, ...payload };
+    renderModal();
+  }
+
+  function closeModal() {
+    ui.modal = null;
+    renderModal();
+  }
+
+  function modalFrame(title, body) {
+    return `<div class="modal-backdrop" data-action="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-label="${escapeHTML(title)}"><div class="modal-head"><h2>${escapeHTML(title)}</h2><button class="close-btn" data-action="modal-close" aria-label="Fermer">×</button></div><div class="modal-body">${body}</div></section></div>`;
+  }
+
+  function cardDetailModal(cardId) {
+    const card = Data.CARD_MAP[cardId];
+    const owned = Core.getOwned(cardId);
+    if (!card || !owned) return '';
+    const stats = Core.getStats(cardId);
+    const cost = Core.trainingCost(cardId);
+    const rarity = Data.RARITIES[card.rarity];
+    const inTeam = Core.getState().team.includes(card.id);
+    return modalFrame(card.name, `
+      <div class="detail-hero" style="${rarityStyle(card)}">
+        <div class="card-rarity">${rarity.label} · ${escapeHTML(card.faction)} · ${escapeHTML(card.role)}</div>
+        <div class="detail-icon">${card.icon}</div>
+        <p class="muted"><em>« ${escapeHTML(card.lore)} »</em></p>
+        <div class="detail-stats">
+          <div class="detail-stat"><strong>${format(stats.hp)}</strong><span>PV</span></div>
+          <div class="detail-stat"><strong>${format(stats.physical)}</strong><span>Dégâts physiques</span></div>
+          <div class="detail-stat"><strong>${format(stats.magical)}</strong><span>Dégâts magiques</span></div>
+          <div class="detail-stat"><strong>${format(stats.speed)}</strong><span>Vitesse</span></div>
+        </div>
+      </div>
+      <div class="panel panel-pad" style="margin-top:12px">
+        <h3 class="section-title"><span>${escapeHTML(card.skill.name)}</span><span class="small muted">Recharge ${card.skill.cooldown}</span></h3>
+        <p class="muted">${skillDescription(card.skill)}. Cette compétence est propre à la carte et l’IA peut également l’utiliser.</p>
+        <p>Niveau <strong>${owned.level}/${Core.MAX_LEVEL}</strong> · Résonance <strong>${owned.resonance}/${Core.MAX_RESONANCE}</strong> · Puissance <strong>${format(Core.getPower(card.id))}</strong></p>
+        <div class="button-row">
+          <button class="primary-btn" data-action="train-card" data-card-id="${card.id}" ${cost == null ? 'disabled' : ''}>${cost == null ? 'Niveau maximum' : `Entraîner · ${format(cost)} or`}</button>
+          <button class="secondary-btn" data-action="team-toggle" data-card-id="${card.id}">${inTeam ? 'Retirer de l’équipe' : 'Ajouter à l’équipe'}</button>
+        </div>
+      </div>`);
+  }
+
+  function summonModal(results) {
+    const cards = results.map(result => `
+      <div class="result-card" style="${rarityStyle(result.card)}">
+        ${result.isNew ? '<span class="new-badge">NOUVELLE</span>' : ''}
+        <div class="result-icon">${result.card.icon}</div>
+        <strong>${escapeHTML(result.card.name)}</strong>
+        <div class="card-rarity">${Data.RARITIES[result.rarity].label}</div>
+        <div class="small muted">${result.isNew ? 'Ajoutée à la collection' : result.resonanceGained ? 'Résonance +1' : `Convertie : +${result.overflowGold} or`}</div>
+      </div>`).join('');
+    return modalFrame('Résultat de l’invocation', `<div class="summon-results">${cards}</div><div class="button-row" style="margin-top:14px"><button class="primary-btn" data-action="modal-close">Continuer</button></div>`);
+  }
+
+  function switchModal() {
+    const battle = Core.getState().battle;
+    if (!battle) return '';
+    const cards = battle.player.units.map((unit, index) => {
+      if (index === battle.player.active || unit.hp <= 0) return '';
+      const card = Data.CARD_MAP[unit.cardId];
+      return `<button class="game-card card-button" style="${rarityStyle(card)}" data-action="switch-to" data-index="${index}"><div class="card-art">${card.icon}</div><h3 class="card-name">${escapeHTML(card.name)}</h3><div class="small muted">${format(unit.hp)}/${format(unit.maxHp)} PV</div></button>`;
+    }).join('');
+    return modalFrame('Choisir un remplaçant', `<div class="card-grid">${cards}</div>`);
+  }
+
+  function settingsModal() {
+    const exported = Core.exportSave() || '';
+    return modalFrame('Sauvegarde', `
+      <p class="muted">La progression est enregistrée automatiquement sur cet appareil. Le code ci-dessous permet de la transférer ou d’en garder une copie.</p>
+      <textarea class="save-textarea" id="save-export" readonly>${escapeHTML(exported)}</textarea>
+      <div class="button-row" style="margin:8px 0 16px"><button class="secondary-btn" data-action="copy-save">Copier le code</button></div>
+      <label for="save-import"><strong>Importer une sauvegarde</strong></label>
+      <textarea class="save-textarea" id="save-import" data-input="import" placeholder="Colle ici un code de sauvegarde…">${escapeHTML(ui.importText)}</textarea>
+      <div class="button-row" style="margin-top:8px"><button class="primary-btn" data-action="import-save">Importer</button><button class="danger-btn" data-action="reset-save">Nouvelle partie</button></div>`);
+  }
+
+  function renderModal() {
+    if (!ui.modal) {
+      modalRoot.innerHTML = '';
+      return;
+    }
+    if (ui.modal.type === 'card') modalRoot.innerHTML = cardDetailModal(ui.modal.cardId);
+    else if (ui.modal.type === 'summon') modalRoot.innerHTML = summonModal(ui.modal.results);
+    else if (ui.modal.type === 'switch') modalRoot.innerHTML = switchModal();
+    else if (ui.modal.type === 'settings') modalRoot.innerHTML = settingsModal();
+    else modalRoot.innerHTML = '';
+  }
+
+  function handleAction(button) {
+    const action = button.dataset.action;
+    if (action === 'navigate') {
+      ui.tab = button.dataset.tab;
+      closeModal();
+      render();
+      return;
+    }
+    if (action === 'summon') {
+      const result = Core.summon(Number(button.dataset.count));
+      if (!result.ok) return toast(result.error, 'error');
+      render();
+      openModal('summon', { results: result.results });
+      return;
+    }
+    if (action === 'filter') {
+      ui.filter = button.dataset.filter;
+      render();
+      return;
+    }
+    if (action === 'open-card') {
+      openModal('card', { cardId: button.dataset.cardId });
+      return;
+    }
+    if (action === 'train-card') {
+      const result = Core.trainCard(button.dataset.cardId);
+      if (!result.ok) return toast(result.error, 'error');
+      toast(`Niveau ${result.level} atteint.`, 'success');
+      render();
+      openModal('card', { cardId: button.dataset.cardId });
+      return;
+    }
+    if (action === 'team-toggle') {
+      const result = Core.toggleTeamCard(button.dataset.cardId);
+      if (!result.ok) return toast(result.error, 'error');
+      toast('Équipe mise à jour.', 'success');
+      render();
+      if (ui.modal && ui.modal.type === 'card') openModal('card', { cardId: button.dataset.cardId });
+      return;
+    }
+    if (action === 'stage-start') {
+      const result = Core.startBattle(button.dataset.stageId);
+      if (!result.ok) return toast(result.error, 'error');
+      ui.tab = 'battle';
+      closeModal();
+      render();
+      return;
+    }
+    if (action === 'battle-action') {
+      const result = Core.performPlayerAction({ type: button.dataset.type });
+      if (!result.ok) return toast(result.error, 'error');
+      render();
+      return;
+    }
+    if (action === 'switch-open') {
+      openModal('switch');
+      return;
+    }
+    if (action === 'switch-to') {
+      const result = Core.performPlayerAction({ type: 'switch', targetIndex: Number(button.dataset.index) });
+      if (!result.ok) return toast(result.error, 'error');
+      closeModal();
+      render();
+      return;
+    }
+    if (action === 'battle-leave') {
+      Core.abandonBattle();
+      ui.tab = 'adventure';
+      render();
+      return;
+    }
+    if (action === 'battle-abandon') {
+      if (global.confirm('Abandonner ce combat ?')) {
+        Core.abandonBattle();
+        ui.tab = 'adventure';
+        render();
+      }
+      return;
+    }
+    if (action === 'settings-open') {
+      openModal('settings');
+      return;
+    }
+    if (action === 'copy-save') {
+      const value = Core.exportSave();
+      if (navigator.clipboard && value) navigator.clipboard.writeText(value).then(() => toast('Code copié.', 'success')).catch(() => toast('Sélectionne le code manuellement.', 'error'));
+      else toast('Sélectionne le code manuellement.', 'error');
+      return;
+    }
+    if (action === 'import-save') {
+      const result = Core.importSave(ui.importText);
+      if (!result.ok) return toast(result.error, 'error');
+      ui.importText = '';
+      closeModal();
+      ui.tab = 'collection';
+      render();
+      toast('Sauvegarde importée.', 'success');
+      return;
+    }
+    if (action === 'reset-save') {
+      if (global.confirm('Effacer toute la progression et recommencer ?')) {
+        Core.resetState();
+        ui.importText = '';
+        closeModal();
+        ui.tab = 'summon';
+        render();
+        toast('Nouvelle partie créée.', 'success');
+      }
+      return;
+    }
+    if (action === 'modal-close') {
+      closeModal();
+      return;
+    }
+    if (action === 'modal-backdrop' && button.classList.contains('modal-backdrop')) closeModal();
+  }
+
+  document.addEventListener('click', event => {
+    const actionNode = event.target.closest('[data-action]');
+    if (!actionNode) return;
+    if (actionNode.dataset.action === 'modal-backdrop' && event.target !== actionNode) return;
+    handleAction(actionNode);
+  });
+
+  document.addEventListener('input', event => {
+    if (event.target.dataset.input === 'search') {
+      ui.search = event.target.value;
+      const cursor = event.target.selectionStart;
+      render();
+      const replacement = document.querySelector('[data-input="search"]');
+      if (replacement) {
+        replacement.focus();
+        replacement.setSelectionRange(cursor, cursor);
+      }
+    } else if (event.target.dataset.input === 'import') {
+      ui.importText = event.target.value;
+    }
+  });
+
+  document.addEventListener('change', event => {
+    if (event.target.dataset.input === 'sort') {
+      ui.sort = event.target.value;
+      render();
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && ui.modal) closeModal();
+  });
+
+  const dataErrors = Data.validateData();
+  if (dataErrors.length) {
+    app.innerHTML = `<main><div class="panel panel-pad"><h1>Erreur de données</h1><pre>${escapeHTML(dataErrors.join('\n'))}</pre></div></main>`;
+    throw new Error(dataErrors.join('; '));
+  }
+
+  render();
+  const bootScreen = document.getElementById('boot-screen');
+  if (bootScreen) bootScreen.remove();
+  global.GameUI = { render, ui, openModal, closeModal };
+})(window);
+
+</script>
+</body>
+</html>
